@@ -1,16 +1,15 @@
 import streamlit as st
-import streamlit as st
 import base64
 import os
 import json
-import speech_recognition as sr
 from groq import Groq
 from pinecone import Pinecone, ServerlessSpec
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
-import dateparser
+from datetime import datetime
+#import dateparser
 class CalendarManager:
     """
   Class to handle Google Calendar authentication and event creation.
@@ -41,9 +40,6 @@ class CalendarManager:
 
         service = build('calendar', 'v3', credentials=creds)
         return service
-
-    
-   
 
 
     def create_calendar_event(self, service, summary, date, day, start_time, end_time, location):
@@ -79,38 +75,13 @@ class CalendarManager:
 
         event = service.events().insert(calendarId='primary', body=event).execute()
         print('Event created:', event.get('htmlLink'))
-class InputHandler:
-    """
-    Class to handle user input (text or voice).
-    """
 
-    def __init__(self):
-        pass
 
-    def get_voice_input(self):
-        """Captures voice input and converts it to text using Google Speech Recognition."""
-        recognizer = sr.Recognizer()
-        with sr.Microphone() as source:
-            print("Listening... Speak now.")
-            recognizer.adjust_for_ambient_noise(source)
-            try:
-                audio = recognizer.listen(source, timeout=5)
-                text = recognizer.recognize_google(audio)
-                print(f"You said: {text}")
-                return text
-            except sr.UnknownValueError:
-                print("Sorry, I couldn't understand the audio.")
-                return None
-            except sr.RequestError:
-                print("Could not request results, please check your internet connection.")
-                return None
-handle_input = InputHandler()
 
 os.environ["GROQ_API_KEY"] = "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"
 os.environ["PINECONE_API_KEY"] = "e9549a8f-6384-4850-b05e-4dd6fdcd51d4"
 SCOPES = ['https://www.googleapis.com/auth/calendar']
 client = Groq(
-    # This is the default and can be omitted
     api_key=os.environ.get("GROQ_API_KEY"),
 )
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
@@ -152,21 +123,21 @@ else:
             text-align: right;
         }
         .h1{
-            color: white}
+            color: black}
         
         h2, h3, h4, h5, h6, p, div, span, label {
-            color: white !important;}
+            color: black !important;}
         
         </style>
         """,
         unsafe_allow_html=True
     )
     # Streamlit content with customized title text
-    st.markdown("<div class='top-right'><h1>REVA - RESOURCEFUL EVERYDAY VIRTUAL ASSISTANT </h1></div>", unsafe_allow_html=True)
+    st.markdown("<div class='top-right'><h1>REVA</h1></div>", unsafe_allow_html=True)
     # Initialize the chat message list in session state if it doesn't exist
     if "chat_messages" not in st.session_state:
         st.session_state.groq_chat_messages = [{"role": "system", "content": """You are a helpful assistant.
-        The user will give their schedule description, and you wil Extract the following details from the given text and return ONLY a valid JSON WITHOUT ANY COMMENTS:                                   
+        The user will give their schedule description, and you wil Extract the following details from the given text and your response must be ONLY as JSON format WITHOUT ANY COMMENTS:                                   
           "Summary": "A concise summary of the event.",
           "Date": "Extract the date or date range if mentioned (e.g., 'March 10, 2024' or 'June 1st to June 10th'). If no date is given, return today's date.",
           "Day": "Extract the day of the week if a single date is provided, else return 'Multiple Days' for date ranges.",
@@ -209,15 +180,8 @@ else:
             model="llama3-8b-8192",
         )
         return chat_completion.choices[0].message.content
-    col1, col2 = st.columns([3,1]) 
     
-    # Handle user input
-    with col1:
-        prompt = st.chat_input("Schedule an Event now!")
-    with col2:
-        if st.button("🎙️ Speak"):
-            prompt = handle_input()
-    if prompt:
+    if prompt:= st.chat_input("Schedule an Event now!"):
         # Display user message
         with st.chat_message("user"):
             st.markdown(prompt)
